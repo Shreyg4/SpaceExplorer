@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-//import { useFetch } from './useFetch';
-//import type { NasaResponse } from '.';
-//import ImageCard from './imageCard';
+import { useFetch } from './useFetch';
+import type { NasaResponse } from '.';
+import ImageCard from './imageCard';
 
 const Home: React.FC = () => {
     const [query, setQuery] = useState('');
@@ -11,8 +11,8 @@ const Home: React.FC = () => {
     const [history, setHistory] = useState<string[]>([]);
 
     const apiKey = import.meta.env.VITE_NASA_API_KEY || '';
-    const url = `https://images-api.nasa.gov/search?q=${searchTrigger}&media_type=${mediaType}&page=${page}&api_key=${apiKey}`;
-    //const { data, loading, error } = useFetch<NasaResponse>(url);
+    const url = `https://images-api.nasa.gov/search?q=${searchTrigger}&media_type=${mediaType}&page=${page}`;
+    const { data, loading, error } = useFetch<NasaResponse>(url);
 
     useEffect(() => {
         const savedHistory = JSON.parse(localStorage.getItem('nasa_seach_history') || '[]');
@@ -25,14 +25,21 @@ const Home: React.FC = () => {
         setSearchTrigger(query);
         setPage(1);
 
+        // Update history
         const newHistory = [query, ...history.filter(h => h !== query)].slice(0, 5);
         setHistory(newHistory);
         localStorage.setItem('nasa_search_history', JSON.stringify(newHistory));
     };
 
+    const handlePillClick = (term: string) => {
+        setQuery(term);
+        setSearchTrigger(term);
+        setPage(1);
+    };
+
     return (
         <div className="container">
-            <header className='header'>
+            <div className='header'>
                 <h1 className='title'> NASA Space Explorer</h1>
                 <form onSubmit={handleSearch} className='search-form'>
                     <input
@@ -42,14 +49,61 @@ const Home: React.FC = () => {
                         placeholder="Search for galaxies, stars, missions..."
                         className='search-input'
                     />
-                    <button
-                        type="submit"
-                        className='btn'
-                    >
+                    <button type="submit" className='btn'>
                         Explore
                     </button>
                 </form>
-            </header>
+
+                {history.length > 0 && (
+                    <div className='history-container'>
+                        {history.map((term, idx) => (
+                            <span key={idx} className="history-pill"
+                                onClick={() => handlePillClick(term)}>
+                                {term}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                <div className='filters'>
+                    <select className='filter-select' value={mediaType}
+                        onChange={(e) => { setMediaType(e.target.value); setPage(1); }}>
+                        <option value="image">Images</option>
+                        <option value="audio">Audio</option>
+                    </select>
+                </div>
+            </div>
+
+            {loading && <div className="loader">Traversing the cosmos...</div>}
+            {error && <div className="error">{error}</div>}
+
+            {!loading && !error && data && (
+                <>
+                    <div className="grid">
+                        {data.collection.items.map((item) => (
+                            <ImageCard key={item.data[0].nasa_id} item={item} />
+                        ))}
+                    </div>
+
+                    <div className="pagination">
+                        <button
+                            className="btn"
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </button>
+                        <span>Page {page}</span>
+                        <button
+                            className="btn"
+                            onClick={() => setPage(p => p + 1)}
+                            disabled={data.collection.items.length === 0}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </>
+            )}
         </div>
     );
 };
