@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useFetch } from './useFetch';
-import type { NasaResponse } from '.';
+import type { NasaResponse } from './index';
 import ImageCard from './imageCard';
 
 const Home: React.FC = () => {
     const [query, setQuery] = useState('');
     const [searchTrigger, setSearchTrigger] = useState('Nebula')
-    const [mediaType, setMediaType] = useState('image');
+
     const [page, setPage] = useState(1);
     const [history, setHistory] = useState<string[]>([]);
 
-    const apiKey = import.meta.env.VITE_NASA_API_KEY || '';
-    const url = `https://images-api.nasa.gov/search?q=${searchTrigger}&media_type=${mediaType}&page=${page}`;
+    const url = `https://images-api.nasa.gov/search?q=${searchTrigger}&media_type=image&page=${page}`;
     const { data, loading, error } = useFetch<NasaResponse>(url);
 
     useEffect(() => {
-        const savedHistory = JSON.parse(localStorage.getItem('nasa_seach_history') || '[]');
+        const savedHistory = JSON.parse(localStorage.getItem('nasa_search_history') || '[]');
         setHistory(savedHistory);
     }, []);
 
@@ -35,6 +34,11 @@ const Home: React.FC = () => {
         setQuery(term);
         setSearchTrigger(term);
         setPage(1);
+    };
+
+    const clearHistory = () => {
+        setHistory([]);
+        localStorage.removeItem('nasa_search_history');
     };
 
     return (
@@ -62,16 +66,12 @@ const Home: React.FC = () => {
                                 {term}
                             </span>
                         ))}
+                        <button className="clear-history-btn" onClick={clearHistory}>
+                            ✕ Clear
+                        </button>
                     </div>
                 )}
 
-                <div className='filters'>
-                    <select className='filter-select' value={mediaType}
-                        onChange={(e) => { setMediaType(e.target.value); setPage(1); }}>
-                        <option value="image">Images</option>
-                        <option value="audio">Audio</option>
-                    </select>
-                </div>
             </div>
 
             {loading && <div className="loader">Traversing the cosmos...</div>}

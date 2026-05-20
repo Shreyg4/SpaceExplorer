@@ -8,7 +8,7 @@ interface Props {
 const ImageCard = ({ item }: Props) => {
     const navigate = useNavigate();
     const data = item.data[0];
-    const imageUrl = item.links?.[0].href;
+    const imageUrl = item.links?.[0]?.href;
 
     if (!imageUrl || data.media_type !== 'image') return null;
 
@@ -19,7 +19,7 @@ const ImageCard = ({ item }: Props) => {
                 <h3 className="card-title">{data.title}</h3>
                 <div className="card-meta">
                     <span>{new Date(data.date_created).getFullYear()}</span>
-                    <span style={{ textTransform: 'capitalize' }}>{data.media_type}</span>
+                    <span>Image</span>
                 </div>
             </div>
         </div>
